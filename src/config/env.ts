@@ -9,6 +9,7 @@ const required = [
   "DB_USER",
   "DB_PASS",
   "DB_NAME",
+  "ANTHROPIC_API_KEY",
 ] as const;
 
 for (const key of required) {
@@ -24,4 +25,5 @@ export const env = {
   DB_USER: process.env.DB_USER!,
   DB_PASS: process.env.DB_PASS!,
   DB_NAME: process.env.DB_NAME!,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY!,
 };

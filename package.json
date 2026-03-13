@@ -11,6 +11,7 @@
     "add-reminder": "ts-node scripts/addReminder.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
