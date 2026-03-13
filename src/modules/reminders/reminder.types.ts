@@ -6,7 +6,8 @@ export type RepeatType =
   | "monthly_day"
   | "monthly_last_day"
   | "monthly_nth_weekday"
-  | "interval";
+  | "interval"
+  | "yearly";
 
 export interface Reminder {
   id: number;
@@ -24,6 +25,8 @@ export interface Reminder {
   repeat_value: string | null;
   repeat_days: string | null;
   repeat_interval: number | null;
+  rrule: string | null;
+  timezone: string | null;
   created_at: Date;
 }
 
@@ -39,4 +42,6 @@ export interface CreateReminderInput {
   repeat_value?: string;
   repeat_days?: string;
   repeat_interval?: number;
+  rrule?: string;
+  timezone?: string;
 }

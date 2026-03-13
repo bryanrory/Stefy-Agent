@@ -1,5 +1,6 @@
 const HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 const RELATIVE_REGEX = /^in\s+(\d+)\s+(seconds?|minutes?|hours?)$/i;
+const RELATIVE_PT_REGEX = /^(?:daqui|em)\s+(\d+)\s+(segundos?|minutos?|horas?)$/i;
 
 export interface ParsedTime {
   datetime: Date;
@@ -24,17 +25,17 @@ export function parseTimeInput(text: string): ParsedTime {
   }
 
   // Relative format: "in X minutes/hours/seconds"
-  const match = trimmed.match(RELATIVE_REGEX);
+  const match = trimmed.match(RELATIVE_REGEX) || trimmed.match(RELATIVE_PT_REGEX);
   if (match) {
     const amount = parseInt(match[1], 10);
     const unit = match[2].toLowerCase();
     const now = new Date();
 
-    if (unit.startsWith("second")) {
+    if (unit.startsWith("second") || unit.startsWith("segundo")) {
       now.setSeconds(now.getSeconds() + amount);
-    } else if (unit.startsWith("minute")) {
+    } else if (unit.startsWith("minute") || unit.startsWith("minuto")) {
       now.setMinutes(now.getMinutes() + amount);
-    } else if (unit.startsWith("hour")) {
+    } else if (unit.startsWith("hour") || unit.startsWith("hora")) {
       now.setHours(now.getHours() + amount);
     }
 
@@ -42,6 +43,6 @@ export function parseTimeInput(text: string): ParsedTime {
   }
 
   throw new Error(
-    `Invalid time format: "${trimmed}". Use HH:mm (e.g. 08:30) or relative (e.g. "in 5 minutes")`
+    `Invalid time format: "${trimmed}". Use HH:mm (e.g. 08:30) or relative (e.g. "in 5 minutes", "daqui 10 minutos")`
   );
 }

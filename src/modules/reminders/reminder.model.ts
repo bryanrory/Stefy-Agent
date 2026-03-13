@@ -3,7 +3,7 @@ import { Reminder, CreateReminderInput } from "./reminder.types";
 
 export async function createReminder(input: CreateReminderInput): Promise<Reminder> {
   const result = await query<Reminder>(
-    "INSERT INTO reminders (text, time, datetime, target, user_id, repeat, require_confirmation, repeat_type, repeat_value, repeat_days, repeat_interval) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
+    "INSERT INTO reminders (text, time, datetime, target, user_id, repeat, require_confirmation, repeat_type, repeat_value, repeat_days, repeat_interval, rrule, timezone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
     [
       input.text,
       input.time,
@@ -16,6 +16,8 @@ export async function createReminder(input: CreateReminderInput): Promise<Remind
       input.repeat_value ?? null,
       input.repeat_days ?? null,
       input.repeat_interval ?? null,
+      input.rrule ?? null,
+      input.timezone ?? null,
     ]
   );
   return result.rows[0];
@@ -87,7 +89,7 @@ export async function deleteReminder(id: number, userId?: number): Promise<Remin
 
 export async function getUnconfirmedReminders(now: Date): Promise<Reminder[]> {
   const result = await query<Reminder>(
-    "SELECT * FROM reminders WHERE require_confirmation = true AND confirmed = false AND active = false AND last_sent_at IS NOT NULL AND last_sent_at <= $1 - INTERVAL '5 minutes'",
+    "SELECT * FROM reminders WHERE require_confirmation = true AND confirmed = false AND active = false AND last_sent_at IS NOT NULL AND last_sent_at <= ($1::timestamp - INTERVAL '5 minutes')",
     [now]
   );
   return result.rows;

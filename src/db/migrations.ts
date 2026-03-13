@@ -108,6 +108,20 @@ export async function runMigrations(): Promise<void> {
     END $$
   `);
 
+  // Add rrule and timezone to reminders
+  await query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'reminders' AND column_name = 'rrule'
+      ) THEN
+        ALTER TABLE reminders ADD COLUMN rrule TEXT;
+        ALTER TABLE reminders ADD COLUMN timezone TEXT DEFAULT 'America/Sao_Paulo';
+      END IF;
+    END $$
+  `);
+
   await query(`
     CREATE TABLE IF NOT EXISTS lists (
       id SERIAL PRIMARY KEY,

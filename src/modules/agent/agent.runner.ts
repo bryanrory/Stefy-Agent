@@ -76,16 +76,31 @@ export async function runAgent(
     // Execute tool with context
     logger.info({ tool: decision.tool, input: decision.input, step }, "Agent calling tool");
 
-    const toolResult = await executeTool(decision.tool, decision.input, context);
+    let toolResult: unknown;
+    let toolError: string | null = null;
 
-    logger.info({ tool: decision.tool, result: toolResult, step }, "Tool result");
+    try {
+      toolResult = await executeTool(decision.tool, decision.input, context);
+      logger.info({ tool: decision.tool, result: toolResult, step }, "Tool result");
+    } catch (err: any) {
+      toolError = err?.message || String(err);
+      logger.warn({ tool: decision.tool, error: toolError, step }, "Tool execution failed");
+    }
 
     // Add assistant response and tool result to conversation
     messages.push({ role: "assistant", content: raw.text });
-    messages.push({
-      role: "user",
-      content: `Tool "${decision.tool}" returned: ${JSON.stringify(toolResult)}\n\nContinue. If you need another tool, call it. If you are done, respond with a friendly text summary.`,
-    });
+
+    if (toolError) {
+      messages.push({
+        role: "user",
+        content: `Tool "${decision.tool}" failed with error: ${toolError}\n\nExplain the error to the user in a friendly way and suggest how to fix their request. Respond with type "text".`,
+      });
+    } else {
+      messages.push({
+        role: "user",
+        content: `Tool "${decision.tool}" returned: ${JSON.stringify(toolResult)}\n\nContinue. If you need another tool, call it. If you are done, respond with a friendly text summary.`,
+      });
+    }
   }
 
   return {
