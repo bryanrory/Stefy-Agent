@@ -5,8 +5,10 @@ import makeWASocket, {
 import qrcode from "qrcode-terminal";
 import { Boom } from "@hapi/boom";
 import { logger } from "../../config/logger";
+import { env } from "../../config/env";
 import { loadSession } from "./session";
 import { WhatsAppClient } from "./types";
+import { runAgent } from "../agent/agent";
 
 let client: WhatsAppClient | null = null;
 
@@ -56,18 +58,42 @@ export async function startWhatsApp(): Promise<WhatsAppClient> {
       if (!msg.message || msg.key.fromMe) continue;
 
       const sender = msg.key.remoteJid;
+      if (!sender) continue;
+
+      // Ignore groups, broadcast, status
+      if (sender.endsWith("@g.us") || sender === "status@broadcast") continue;
+
       const text =
         msg.message.conversation ||
         msg.message.extendedTextMessage?.text ||
         "";
 
-      if (!sender || !text) continue;
+      if (!text) continue;
 
       logger.info({ sender, text }, "Message received");
 
-      if (text.toLowerCase() === "ping") {
-        await sock.sendMessage(sender, { text: "pong" });
-        logger.info({ sender }, "Auto-replied: pong");
+      // Check prefix
+      const prefix = env.BOT_PREFIX.toLowerCase();
+      if (!text.toLowerCase().startsWith(prefix + " ")) continue;
+
+      const agentMessage = text.slice(prefix.length + 1).trim();
+      if (!agentMessage) continue;
+
+      logger.info({ sender, agentMessage }, "Agent called via WhatsApp");
+
+      try {
+        const agentResult = await runAgent(agentMessage);
+
+        const reply =
+          typeof agentResult.result === "string"
+            ? agentResult.result
+            : JSON.stringify(agentResult.result, null, 2);
+
+        await sock.sendMessage(sender, { text: reply });
+        logger.info({ sender, reply }, "Agent response sent");
+      } catch (err) {
+        logger.error({ err, sender }, "Agent error");
+        await sock.sendMessage(sender, { text: "Erro ao processar mensagem." });
       }
     }
   });
