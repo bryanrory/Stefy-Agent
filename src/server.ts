@@ -3,6 +3,7 @@ import { logger } from "./config/logger";
 import { connectDatabase } from "./db";
 import { buildApp } from "./app";
 import { startWhatsApp } from "./modules/whatsapp/client";
+import { startReminderScheduler } from "./modules/reminders/reminder.scheduler";
 
 async function start() {
   await connectDatabase();
@@ -14,6 +15,8 @@ async function start() {
   logger.info(`Server running on http://localhost:${env.PORT}`);
 
   await startWhatsApp();
+
+  startReminderScheduler();
 }
 
 start().catch((err) => {
