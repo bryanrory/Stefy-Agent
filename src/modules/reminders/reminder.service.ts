@@ -5,25 +5,36 @@ import {
   deleteReminder as deleteReminderDB,
 } from "./reminder.model";
 import { CreateReminderInput, Reminder } from "./reminder.types";
-
-const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+import { parseTimeInput } from "./timeParser";
 
 export async function createReminder(input: CreateReminderInput): Promise<Reminder> {
-  if (!TIME_REGEX.test(input.time)) {
-    throw new Error("Invalid time format. Use HH:mm (e.g. 08:30)");
+  const isRecurring = input.repeat_type && input.repeat_type !== "once";
+
+  // Recurring reminders use time (HH:mm) + recurrence rules, not datetime
+  let datetime: Date | null = null;
+  if (!isRecurring) {
+    const parsed = parseTimeInput(input.time);
+    datetime = parsed.datetime;
   }
 
-  const reminder = await createReminderDB(input);
-  logger.info({ reminder }, "Reminder created");
+  const reminder = await createReminderDB({
+    ...input,
+    time: input.time,
+    datetime,
+    repeat: input.repeat ?? !!isRecurring,
+    require_confirmation: input.require_confirmation ?? false,
+  });
+
+  logger.info({ reminder, triggersAt: datetime, repeatType: input.repeat_type }, "Reminder created");
   return reminder;
 }
 
-export async function listReminders(): Promise<Reminder[]> {
-  return getAllReminders();
+export async function listReminders(userId?: number): Promise<Reminder[]> {
+  return getAllReminders(userId);
 }
 
-export async function removeReminder(id: number): Promise<Reminder | null> {
-  const removed = await deleteReminderDB(id);
+export async function removeReminder(id: number, userId?: number): Promise<Reminder | null> {
+  const removed = await deleteReminderDB(id, userId);
   if (removed) {
     logger.info({ id }, "Reminder removed");
   }

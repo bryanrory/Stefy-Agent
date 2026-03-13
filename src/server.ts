@@ -1,12 +1,14 @@
 import { env } from "./config/env";
 import { logger } from "./config/logger";
 import { connectDatabase } from "./db";
+import { runMigrations } from "./db/migrations";
 import { buildApp } from "./app";
 import { startWhatsApp } from "./modules/whatsapp/client";
 import { startReminderScheduler } from "./modules/reminders/reminder.scheduler";
 
 async function start() {
   await connectDatabase();
+  await runMigrations();
 
   const app = buildApp();
 

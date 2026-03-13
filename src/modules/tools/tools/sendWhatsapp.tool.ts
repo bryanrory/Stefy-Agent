@@ -4,6 +4,10 @@ import { getWhatsAppClient } from "../../whatsapp/client";
 export const sendWhatsappTool: Tool = {
   name: "send_whatsapp",
   description: "Send a WhatsApp message to a phone number",
+  inputSchema: {
+    phone: { type: "string", description: "Phone number", required: true, example: "5511999999999" },
+    text: { type: "string", description: "Message text", required: true, example: "Hello!" },
+  },
 
   async execute(input: { phone: string; text: string }) {
     const { phone, text } = input;

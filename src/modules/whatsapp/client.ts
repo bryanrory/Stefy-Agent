@@ -9,6 +9,8 @@ import { env } from "../../config/env";
 import { loadSession } from "./session";
 import { WhatsAppClient } from "./types";
 import { runAgent } from "../agent/agent";
+import { getOrCreateUser } from "../users/user.service";
+import { getPendingConfirmation, confirmReminder } from "../reminders/reminder.model";
 
 let client: WhatsAppClient | null = null;
 
@@ -72,6 +74,19 @@ export async function startWhatsApp(): Promise<WhatsAppClient> {
 
       logger.info({ sender, text }, "Message received");
 
+      // Check for confirmation reply (no prefix needed)
+      const phone = sender.replace("@s.whatsapp.net", "");
+      const confirmWords = ["sim", "yes", "s", "ok", "feito", "done", "fiz", "tomei", "já tomei", "ja tomei"];
+      if (confirmWords.includes(text.trim().toLowerCase())) {
+        const pending = await getPendingConfirmation(phone);
+        if (pending) {
+          await confirmReminder(pending.id);
+          await sock.sendMessage(sender, { text: `✅ Confirmado: ${pending.text}` });
+          logger.info({ id: pending.id, phone }, "Reminder confirmed");
+          continue;
+        }
+      }
+
       // Check prefix
       const prefix = env.BOT_PREFIX.toLowerCase();
       if (!text.toLowerCase().startsWith(prefix + " ")) continue;
@@ -79,10 +94,13 @@ export async function startWhatsApp(): Promise<WhatsAppClient> {
       const agentMessage = text.slice(prefix.length + 1).trim();
       if (!agentMessage) continue;
 
-      logger.info({ sender, agentMessage }, "Agent called via WhatsApp");
+      // Get or create user
+      const user = await getOrCreateUser({ phone, name: phone });
+
+      logger.info({ sender, phone, userId: user.id, agentMessage }, "Agent called via WhatsApp");
 
       try {
-        const agentResult = await runAgent(agentMessage);
+        const agentResult = await runAgent(agentMessage, user.id, phone);
 
         const reply =
           typeof agentResult.result === "string"
