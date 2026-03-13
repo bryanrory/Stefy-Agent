@@ -26,4 +26,5 @@ export const env = {
   DB_PASS: process.env.DB_PASS!,
   DB_NAME: process.env.DB_NAME!,
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY!,
+  BOT_PREFIX: process.env.BOT_PREFIX || "bot",
 };
