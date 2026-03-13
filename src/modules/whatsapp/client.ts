@@ -62,8 +62,8 @@ export async function startWhatsApp(): Promise<WhatsAppClient> {
       const sender = msg.key.remoteJid;
       if (!sender) continue;
 
-      // Ignore groups, broadcast, status
-      if (sender.endsWith("@g.us") || sender === "status@broadcast") continue;
+      // Ignore groups, broadcast, status, newsletters, LID
+      if (sender.endsWith("@g.us") || sender === "status@broadcast" || sender.endsWith("@newsletter") || sender.endsWith("@lid")) continue;
 
       const text =
         msg.message.conversation ||

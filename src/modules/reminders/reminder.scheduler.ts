@@ -78,6 +78,15 @@ export function shouldRunReminder(reminder: Reminder, now: Date): boolean {
       return false;
     }
 
+    case "yearly": {
+      if (!reminder.repeat_value) return false;
+      const parts = reminder.repeat_value.split("/");
+      if (parts.length !== 2) return false;
+      const targetDay = parseInt(parts[0]);
+      const targetMonth = parseInt(parts[1]);
+      return dayOfMonth === targetDay && (now.getMonth() + 1) === targetMonth;
+    }
+
     case "interval": {
       const interval = reminder.repeat_interval ?? 1;
       if (!reminder.last_sent_at) return true;
