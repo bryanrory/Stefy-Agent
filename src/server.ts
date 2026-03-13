@@ -2,6 +2,7 @@ import { env } from "./config/env";
 import { logger } from "./config/logger";
 import { connectDatabase } from "./db";
 import { buildApp } from "./app";
+import { startWhatsApp } from "./modules/whatsapp/client";
 
 async function start() {
   await connectDatabase();
@@ -11,6 +12,8 @@ async function start() {
   await app.listen({ port: env.PORT, host: "0.0.0.0" });
 
   logger.info(`Server running on http://localhost:${env.PORT}`);
+
+  await startWhatsApp();
 }
 
 start().catch((err) => {
